@@ -1,1 +1,0 @@
-bunx --bun shadcn@latest init --preset b1Yobvefi --template vite --rtl --pointer

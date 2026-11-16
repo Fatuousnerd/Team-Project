@@ -1,37 +1,39 @@
-import Cookies from "js-cookie";
-import { createContext, type ReactNode, useEffect, useState } from "react";
-import type { ThemeType } from "@/config/Types/app.types";
+import {
+	createContext,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useState,
+} from "react";
+import type { ThemeMode, ThemeType } from "@/config/Types/app.types";
+
+const STORAGE_KEY = "meridian.theme";
 
 export const ThemeContext = createContext<ThemeType | null>(null);
 
+function readInitialTheme(): ThemeMode {
+	if (typeof window === "undefined") return "dark";
+	const stored = window.localStorage.getItem(STORAGE_KEY);
+	if (stored === "light" || stored === "dark") return stored;
+	return "dark";
+}
+
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-	const [theme, setTheme] = useState<ThemeType["theme"]>("light");
+	const [theme, setTheme] = useState<ThemeMode>(readInitialTheme);
 
 	useEffect(() => {
-		const prefersDark = window.matchMedia(
-			"(prefers-color-scheme:dark)",
-		).matches;
-		const themeGet = Cookies.get("theme");
-
-		if (!themeGet) {
-			const initialTheme = prefersDark ? "dark" : "light";
-			Cookies.set("theme", initialTheme, { expires: 365 });
-			setTheme(initialTheme);
-		} else setTheme(themeGet);
-	}, []);
-
-	useEffect(() => {
-		document.body.className = theme;
+		const root = document.documentElement;
+		root.classList.toggle("dark", theme === "dark");
+		root.style.colorScheme = theme;
+		window.localStorage.setItem(STORAGE_KEY, theme);
 	}, [theme]);
 
-	const toggleTheme: ThemeType["toggleTheme"] = () => {
-		const newTheme = theme === "dark" ? "light" : "dark";
-		Cookies.set("theme", newTheme, { expires: 365 });
-		setTheme(newTheme);
-	};
+	const toggleTheme = useCallback(() => {
+		setTheme((current) => (current === "dark" ? "light" : "dark"));
+	}, []);
 
 	return (
-		<ThemeContext.Provider value={{ theme, toggleTheme }}>
+		<ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
 			{children}
 		</ThemeContext.Provider>
 	);
