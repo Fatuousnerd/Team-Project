@@ -81,6 +81,7 @@ To move to the real API:
   the auth flow is actually needed.
 - Settings switches are presentation-only placeholders; wire them to a config
   store or Tauri store plugin when needed.
-- The starter's `components/ai-elements` folder and unused auth helpers were
-  deleted to keep the tree focused on trading UI. Some now-unused packages still
-  sit in `package.json`; prune them with `bun remove` when convenient.
+- The starter's `components/ai-elements` folder, unused auth helpers, and their
+  AI, Supabase, and node-flow packages have been removed. Some unused shadcn
+  primitives remain in `components/ui`, so their dependencies (carousel, drawer,
+  calendar, OTP, resizable panels) stay until those components are dropped.
