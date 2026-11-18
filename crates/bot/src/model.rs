@@ -74,102 +74,102 @@ impl OrderBook {
         }
 
         match order.order_type {
-            OrderType::Market => {
-                match order.side {
-                    OrderSide::Buy => {
-                        while remaining > Decimal::ZERO {
-                            let Some((ask_price, mut book_order)) =
-                                Self::pop_best(&mut self.asks, false)
-                            else {
-                                break;
-                            };
-                            let available = book_order.quantity - book_order.filled_quantity;
-                            if available <= Decimal::ZERO {
-                                continue;
-                            }
-                            let trade_qty = remaining.min(available);
-                            let trade = Trade {
-                                id: Uuid::new_v4(),
-                                order_id: order.id,
-                                symbol: self.symbol.clone(),
-                                side: order.side,
-                                price: ask_price,
-                                quantity: trade_qty,
-                                executed_at: Utc::now(),
-                            };
-                            trades.push(trade.clone());
-                            book_order.filled_quantity += trade_qty;
-                            remaining -= trade_qty;
-                            order.filled_quantity += trade_qty;
-                            book_order.status = if book_order.filled_quantity >= book_order.quantity {
-                                OrderStatus::Filled
-                            } else {
-                                OrderStatus::PartiallyFilled
-                            };
-                            book_order.updated_at = Utc::now();
-                            if book_order.filled_quantity < book_order.quantity {
-                                self.asks
-                                    .entry(ask_price)
-                                    .or_default()
-                                    .insert(0, book_order.clone());
-                            }
-                            if let Some(o) = self.orders.get_mut(&book_order.id) {
-                                *o = book_order.clone();
-                            }
+            OrderType::Market => match order.side {
+                OrderSide::Buy => {
+                    while remaining > Decimal::ZERO {
+                        let Some((ask_price, mut book_order)) =
+                            Self::pop_best(&mut self.asks, false)
+                        else {
+                            break;
+                        };
+                        let available = book_order.quantity - book_order.filled_quantity;
+                        if available <= Decimal::ZERO {
+                            continue;
                         }
-                    }
-                    OrderSide::Sell => {
-                        while remaining > Decimal::ZERO {
-                            let Some((bid_price, mut book_order)) =
-                                Self::pop_best(&mut self.bids, true)
-                            else {
-                                break;
-                            };
-                            let available = book_order.quantity - book_order.filled_quantity;
-                            if available <= Decimal::ZERO {
-                                continue;
-                            }
-                            let trade_qty = remaining.min(available);
-                            let trade = Trade {
-                                id: Uuid::new_v4(),
-                                order_id: order.id,
-                                symbol: self.symbol.clone(),
-                                side: order.side,
-                                price: bid_price,
-                                quantity: trade_qty,
-                                executed_at: Utc::now(),
-                            };
-                            trades.push(trade.clone());
-                            book_order.filled_quantity += trade_qty;
-                            remaining -= trade_qty;
-                            order.filled_quantity += trade_qty;
-                            book_order.status = if book_order.filled_quantity >= book_order.quantity {
-                                OrderStatus::Filled
-                            } else {
-                                OrderStatus::PartiallyFilled
-                            };
-                            book_order.updated_at = Utc::now();
-                            if book_order.filled_quantity < book_order.quantity {
-                                self.bids
-                                    .entry(bid_price)
-                                    .or_default()
-                                    .insert(0, book_order.clone());
-                            }
-                            if let Some(o) = self.orders.get_mut(&book_order.id) {
-                                *o = book_order.clone();
-                            }
+                        let trade_qty = remaining.min(available);
+                        let trade = Trade {
+                            id: Uuid::new_v4(),
+                            order_id: order.id,
+                            symbol: self.symbol.clone(),
+                            side: order.side,
+                            price: ask_price,
+                            quantity: trade_qty,
+                            executed_at: Utc::now(),
+                        };
+                        trades.push(trade.clone());
+                        book_order.filled_quantity += trade_qty;
+                        remaining -= trade_qty;
+                        order.filled_quantity += trade_qty;
+                        book_order.status = if book_order.filled_quantity >= book_order.quantity {
+                            OrderStatus::Filled
+                        } else {
+                            OrderStatus::PartiallyFilled
+                        };
+                        book_order.updated_at = Utc::now();
+                        if book_order.filled_quantity < book_order.quantity {
+                            self.asks
+                                .entry(ask_price)
+                                .or_default()
+                                .insert(0, book_order.clone());
+                        }
+                        if let Some(o) = self.orders.get_mut(&book_order.id) {
+                            *o = book_order.clone();
                         }
                     }
                 }
-            }
+                OrderSide::Sell => {
+                    while remaining > Decimal::ZERO {
+                        let Some((bid_price, mut book_order)) =
+                            Self::pop_best(&mut self.bids, true)
+                        else {
+                            break;
+                        };
+                        let available = book_order.quantity - book_order.filled_quantity;
+                        if available <= Decimal::ZERO {
+                            continue;
+                        }
+                        let trade_qty = remaining.min(available);
+                        let trade = Trade {
+                            id: Uuid::new_v4(),
+                            order_id: order.id,
+                            symbol: self.symbol.clone(),
+                            side: order.side,
+                            price: bid_price,
+                            quantity: trade_qty,
+                            executed_at: Utc::now(),
+                        };
+                        trades.push(trade.clone());
+                        book_order.filled_quantity += trade_qty;
+                        remaining -= trade_qty;
+                        order.filled_quantity += trade_qty;
+                        book_order.status = if book_order.filled_quantity >= book_order.quantity {
+                            OrderStatus::Filled
+                        } else {
+                            OrderStatus::PartiallyFilled
+                        };
+                        book_order.updated_at = Utc::now();
+                        if book_order.filled_quantity < book_order.quantity {
+                            self.bids
+                                .entry(bid_price)
+                                .or_default()
+                                .insert(0, book_order.clone());
+                        }
+                        if let Some(o) = self.orders.get_mut(&book_order.id) {
+                            *o = book_order.clone();
+                        }
+                    }
+                }
+            },
             OrderType::Limit => {
-                let limit_price = order
-                    .price
-                    .ok_or_else(|| crate::error::AppError::BadRequest("Limit order requires a price".to_string()))?;
+                let limit_price = order.price.ok_or_else(|| {
+                    crate::error::AppError::BadRequest("Limit order requires a price".to_string())
+                })?;
                 match order.side {
                     OrderSide::Buy => {
                         while remaining > Decimal::ZERO {
-                            let Some(&ask) = self.asks.keys().next() else { break };
+                            let Some(&ask) = self.asks.keys().next() else {
+                                break;
+                            };
                             if ask > limit_price {
                                 break;
                             }
@@ -196,7 +196,8 @@ impl OrderBook {
                             book_order.filled_quantity += trade_qty;
                             remaining -= trade_qty;
                             order.filled_quantity += trade_qty;
-                            book_order.status = if book_order.filled_quantity >= book_order.quantity {
+                            book_order.status = if book_order.filled_quantity >= book_order.quantity
+                            {
                                 OrderStatus::Filled
                             } else {
                                 OrderStatus::PartiallyFilled
@@ -214,12 +215,17 @@ impl OrderBook {
                         }
                         if remaining > Decimal::ZERO {
                             order.filled_quantity = order.quantity - remaining;
-                            self.bids.entry(limit_price).or_default().push(order.clone());
+                            self.bids
+                                .entry(limit_price)
+                                .or_default()
+                                .push(order.clone());
                         }
                     }
                     OrderSide::Sell => {
                         while remaining > Decimal::ZERO {
-                            let Some(&bid) = self.bids.keys().next_back() else { break };
+                            let Some(&bid) = self.bids.keys().next_back() else {
+                                break;
+                            };
                             if bid < limit_price {
                                 break;
                             }
@@ -246,7 +252,8 @@ impl OrderBook {
                             book_order.filled_quantity += trade_qty;
                             remaining -= trade_qty;
                             order.filled_quantity += trade_qty;
-                            book_order.status = if book_order.filled_quantity >= book_order.quantity {
+                            book_order.status = if book_order.filled_quantity >= book_order.quantity
+                            {
                                 OrderStatus::Filled
                             } else {
                                 OrderStatus::PartiallyFilled
@@ -264,7 +271,10 @@ impl OrderBook {
                         }
                         if remaining > Decimal::ZERO {
                             order.filled_quantity = order.quantity - remaining;
-                            self.asks.entry(limit_price).or_default().push(order.clone());
+                            self.asks
+                                .entry(limit_price)
+                                .or_default()
+                                .push(order.clone());
                         }
                     }
                 }
@@ -423,12 +433,12 @@ impl TradingEngine {
 
         let final_order = {
             let books = self.order_books.read().unwrap();
-            let book = books
-                .get(&symbol)
-                .ok_or_else(|| crate::error::AppError::Internal("order book missing".to_string()))?;
-            book.get_order(&order.id)
-                .cloned()
-                .ok_or_else(|| crate::error::AppError::Internal("order missing after match".to_string()))?
+            let book = books.get(&symbol).ok_or_else(|| {
+                crate::error::AppError::Internal("order book missing".to_string())
+            })?;
+            book.get_order(&order.id).cloned().ok_or_else(|| {
+                crate::error::AppError::Internal("order missing after match".to_string())
+            })?
         };
 
         Ok(final_order)
@@ -500,22 +510,19 @@ impl TradingEngine {
         }
 
         let mut accounts = self.accounts.write().unwrap();
-        let account = accounts
-            .get_mut(&account_id)
-            .ok_or_else(|| crate::error::AppError::NotFound(format!("Account {account_id} not found")))?;
+        let account = accounts.get_mut(&account_id).ok_or_else(|| {
+            crate::error::AppError::NotFound(format!("Account {account_id} not found"))
+        })?;
 
         for trade in trades {
             let notional = trade.price * trade.quantity;
             match trade.side {
                 OrderSide::Buy => {
                     account.balance -= notional;
-                    if let Some(pos) = account
-                        .positions
-                        .iter_mut()
-                        .find(|p| p.symbol == *symbol)
-                    {
+                    if let Some(pos) = account.positions.iter_mut().find(|p| p.symbol == *symbol) {
                         let total_qty = pos.quantity + trade.quantity;
-                        pos.average_price = ((pos.average_price * pos.quantity) + notional) / total_qty;
+                        pos.average_price =
+                            ((pos.average_price * pos.quantity) + notional) / total_qty;
                         pos.quantity = total_qty;
                     } else {
                         account.positions.push(Position {
@@ -528,11 +535,7 @@ impl TradingEngine {
                 }
                 OrderSide::Sell => {
                     account.balance += notional;
-                    if let Some(pos) = account
-                        .positions
-                        .iter_mut()
-                        .find(|p| p.symbol == *symbol)
-                    {
+                    if let Some(pos) = account.positions.iter_mut().find(|p| p.symbol == *symbol) {
                         let total_qty = pos.quantity - trade.quantity;
                         if total_qty == rust_decimal::Decimal::ZERO {
                             pos.quantity = rust_decimal::Decimal::ZERO;

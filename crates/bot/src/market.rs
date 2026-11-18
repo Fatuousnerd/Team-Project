@@ -5,7 +5,9 @@ use std::collections::HashMap;
 
 const STOCKS: &[&str] = &["AAPL", "TSLA", "MSFT", "GOOGL", "AMZN", "NVDA", "META"];
 const FOREX: &[&str] = &["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF"];
-const CRYPTO: &[&str] = &["BTCUSDT", "ETHUSDT", "SOLUSDT", "ADAUSDT", "DOGEUSDT", "XRPUSDT"];
+const CRYPTO: &[&str] = &[
+    "BTCUSDT", "ETHUSDT", "SOLUSDT", "ADAUSDT", "DOGEUSDT", "XRPUSDT",
+];
 
 /// In-memory mock market. Seeded with realistic-looking symbols for stocks,
 /// forex, and crypto. A background task calls `tick()` to simulate price

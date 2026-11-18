@@ -1,6 +1,6 @@
 use axum::{
-    extract::{Path, Query, State},
     extract::ws::{Message, WebSocketUpgrade},
+    extract::{Path, Query, State},
     response::{Json, Response},
     routing::{get, post},
     Router,
@@ -44,9 +44,9 @@ async fn get_market(
 ) -> AppResult<Json<MarketData>> {
     let market = state.market.read().unwrap();
     let symbol = Symbol::new(symbol);
-    let data = market
-        .get(&symbol)
-        .ok_or_else(|| crate::error::AppError::NotFound(format!("Market {} not found", symbol.as_str())))?;
+    let data = market.get(&symbol).ok_or_else(|| {
+        crate::error::AppError::NotFound(format!("Market {} not found", symbol.as_str()))
+    })?;
     Ok(Json(data.clone()))
 }
 
@@ -58,9 +58,8 @@ async fn get_account(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<Account>> {
-    let id = Uuid::parse_str(&id).map_err(|_| {
-        crate::error::AppError::BadRequest(format!("Invalid account id: {id}"))
-    })?;
+    let id = Uuid::parse_str(&id)
+        .map_err(|_| crate::error::AppError::BadRequest(format!("Invalid account id: {id}")))?;
     let account = state.engine.get_account(id)?;
     Ok(Json(account))
 }
@@ -69,9 +68,8 @@ async fn get_positions(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<Vec<Position>>> {
-    let id = Uuid::parse_str(&id).map_err(|_| {
-        crate::error::AppError::BadRequest(format!("Invalid account id: {id}"))
-    })?;
+    let id = Uuid::parse_str(&id)
+        .map_err(|_| crate::error::AppError::BadRequest(format!("Invalid account id: {id}")))?;
     let account = state.engine.get_account(id)?;
     Ok(Json(account.positions))
 }
@@ -108,9 +106,8 @@ async fn get_order(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<Order>> {
-    let id = Uuid::parse_str(&id).map_err(|_| {
-        crate::error::AppError::BadRequest(format!("Invalid order id: {id}"))
-    })?;
+    let id = Uuid::parse_str(&id)
+        .map_err(|_| crate::error::AppError::BadRequest(format!("Invalid order id: {id}")))?;
     let order = state.engine.get_order(&id)?;
     Ok(Json(order))
 }
@@ -119,9 +116,8 @@ async fn cancel_order(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<Order>> {
-    let id = Uuid::parse_str(&id).map_err(|_| {
-        crate::error::AppError::BadRequest(format!("Invalid order id: {id}"))
-    })?;
+    let id = Uuid::parse_str(&id)
+        .map_err(|_| crate::error::AppError::BadRequest(format!("Invalid order id: {id}")))?;
     let order = state.engine.cancel_order(&id)?;
     Ok(Json(order))
 }
@@ -131,10 +127,7 @@ async fn cancel_order(
 ///
 /// axum 0.7 uses `WebSocketUpgrade` as the extractor and `on_upgrade` to spawn
 /// the socket handler, so this works with the shared `Arc<AppState>` state.
-async fn ws_handler(
-    State(state): State<Arc<AppState>>,
-    upgrade: WebSocketUpgrade,
-) -> Response {
+async fn ws_handler(State(state): State<Arc<AppState>>, upgrade: WebSocketUpgrade) -> Response {
     let market = state.market.clone();
     upgrade.on_upgrade(move |socket| async move {
         let (mut sender, _receiver) = socket.split();

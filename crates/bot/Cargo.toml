@@ -3,6 +3,10 @@ name = "bot"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "trading_bot_logic"
+path = "src/lib.rs"
+
 [dependencies]
 axum = { version = "0.7", features = ["ws", "macros"] }
 serde.workspace = true

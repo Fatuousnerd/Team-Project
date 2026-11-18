@@ -2,8 +2,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use trading_bot_logic::AppState;
 use trading_bot_logic::server;
+use trading_bot_logic::AppState;
 
 #[tokio::main]
 async fn main() {
@@ -25,8 +25,6 @@ async fn main() {
         }
     });
 
-    let addr: SocketAddr = "0.0.0.0:3001"
-        .parse()
-        .expect("valid socket address");
+    let addr: SocketAddr = "0.0.0.0:3001".parse().expect("valid socket address");
     server::run(state, addr).await;
 }

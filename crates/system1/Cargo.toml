@@ -1,0 +1,17 @@
+[package]
+name = "system1"
+description = "Ollama-backed System 1 trading decision engine for the Meridian app"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+async-trait = "0.1"
+reqwest = { version = "0.13", default-features = false, features = ["json"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "2"
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

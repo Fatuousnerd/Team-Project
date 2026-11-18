@@ -2,8 +2,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::AppState;
 use crate::handlers;
+use crate::AppState;
 
 pub async fn run(state: Arc<AppState>, addr: SocketAddr) {
     let cors = CorsLayer::new()
